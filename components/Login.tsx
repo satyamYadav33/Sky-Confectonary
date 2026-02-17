@@ -1,11 +1,13 @@
+
 import React from 'react';
 
 interface LoginProps {
   onNavigateHome: () => void;
   onNavigateToCatalog: () => void;
+  onNavigateToAdmin?: () => void;
 }
 
-const Login: React.FC<LoginProps> = ({ onNavigateHome, onNavigateToCatalog }) => {
+const Login: React.FC<LoginProps> = ({ onNavigateHome, onNavigateToCatalog, onNavigateToAdmin }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-background-dark px-4">
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-8">
@@ -52,6 +54,18 @@ const Login: React.FC<LoginProps> = ({ onNavigateHome, onNavigateToCatalog }) =>
             Sign In
           </button>
         </form>
+
+        {onNavigateToAdmin && (
+          <div className="mt-4">
+            <button 
+              onClick={onNavigateToAdmin}
+              className="w-full bg-slate-900 dark:bg-slate-700 text-white font-bold py-4 rounded-xl hover:bg-slate-800 dark:hover:bg-slate-600 transition-all flex items-center justify-center gap-2"
+            >
+              <span className="material-symbols-outlined text-sm">admin_panel_settings</span>
+              Owner / Admin Login
+            </button>
+          </div>
+        )}
 
         <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center text-sm text-slate-500">
           Don't have an account? <button className="text-primary font-bold hover:underline">Apply for Wholesale</button>

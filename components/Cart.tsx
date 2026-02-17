@@ -1,13 +1,50 @@
-import React from 'react';
+
+import React, { useState } from 'react';
+import { CartItem } from '../types';
 
 interface CartProps {
   onNavigateHome: () => void;
   onNavigateToCatalog: () => void;
   onNavigateToCheckout: () => void;
   cartCount?: number;
+  cartItems?: CartItem[];
+  onUpdateQuantity?: (productId: number, delta: number) => void;
+  onRemoveItem?: (productId: number) => void;
+  onClearCart?: () => void;
 }
 
-const Cart: React.FC<CartProps> = ({ onNavigateHome, onNavigateToCatalog, onNavigateToCheckout, cartCount = 0 }) => {
+const Cart: React.FC<CartProps> = ({ 
+  onNavigateHome, 
+  onNavigateToCatalog, 
+  onNavigateToCheckout, 
+  cartCount = 0,
+  cartItems = [],
+  onUpdateQuantity,
+  onRemoveItem,
+  onClearCart
+}) => {
+  const [itemToRemove, setItemToRemove] = useState<number | null>(null);
+  const [isClearCartOpen, setIsClearCartOpen] = useState(false);
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const discount = subtotal > 500 ? subtotal * 0.05 : 0; // Simple discount logic
+  const shipping = subtotal > 1000 ? 0 : 25; // Simple shipping logic
+  const total = subtotal - discount + shipping;
+
+  const handleRemoveItem = () => {
+    if (itemToRemove !== null && onRemoveItem) {
+      onRemoveItem(itemToRemove);
+      setItemToRemove(null);
+    }
+  };
+
+  const handleClearCart = () => {
+    if (onClearCart) {
+      onClearCart();
+      setIsClearCartOpen(false);
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark">
       {/* Cart Header */}
@@ -36,27 +73,10 @@ const Cart: React.FC<CartProps> = ({ onNavigateHome, onNavigateToCatalog, onNavi
               <button className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
                 Bulk Candy
               </button>
-              <button className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
-                Beverages
-              </button>
-              <button className="text-sm font-semibold text-slate-600 dark:text-slate-300 hover:text-primary transition-colors">
-                Recent Orders
-              </button>
             </nav>
           </div>
 
           <div className="flex items-center gap-6">
-            <div className="hidden lg:block relative">
-              <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-lg">
-                search
-              </span>
-              <input 
-                type="text"
-                placeholder="Quick SKU Search"
-                className="bg-slate-100 dark:bg-slate-800 border-none rounded-lg py-2.5 pl-10 pr-4 text-sm w-64 outline-none focus:ring-2 focus:ring-primary/50"
-              />
-            </div>
-
             <button className="relative p-1 text-slate-800 dark:text-slate-200 hover:text-primary transition-colors">
               <span className="material-symbols-outlined text-2xl">shopping_cart</span>
               {cartCount > 0 && (
@@ -65,12 +85,6 @@ const Cart: React.FC<CartProps> = ({ onNavigateHome, onNavigateToCatalog, onNavi
                 </span>
               )}
             </button>
-            
-            <img 
-              src="https://api.dicebear.com/9.x/avataaars/svg?seed=Felix" 
-              alt="User" 
-              className="h-10 w-10 rounded-full bg-slate-100 border border-slate-200"
-            />
           </div>
         </div>
       </header>
@@ -86,174 +100,155 @@ const Cart: React.FC<CartProps> = ({ onNavigateHome, onNavigateToCatalog, onNavi
               Review your bulk order and MOQ requirements.
             </p>
           </div>
+          {discount > 0 && (
           <div className="bg-primary/10 text-primary px-4 py-2 rounded-lg font-bold flex items-center gap-2">
             <span className="material-symbols-outlined text-xl">savings</span>
-            Estimated Bulk Savings: $142.50
+            Estimated Bulk Savings: ${discount.toFixed(2)}
           </div>
+          )}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left Column - Cart Items */}
           <div className="lg:col-span-2 space-y-6">
             
-            {/* Alert Banner */}
-            <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-xl p-4 flex gap-4">
-              <span className="material-symbols-outlined text-orange-600 dark:text-orange-400">info</span>
-              <div>
-                <h4 className="font-bold text-orange-800 dark:text-orange-200">Action Required: MOQ Not Met</h4>
-                <p className="text-sm text-orange-700 dark:text-orange-300 mt-1">
-                  Some items in your cart do not meet the minimum order quantity for wholesale pricing.
-                </p>
-              </div>
-            </div>
-
-            {/* Cart Table */}
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
-              <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider">
-                <div className="col-span-6">Product</div>
-                <div className="col-span-2 text-center">Pricing</div>
-                <div className="col-span-2 text-center">Quantity</div>
-                <div className="col-span-2 text-right">Total</div>
-              </div>
-
-              {/* Item 1 */}
-              <div className="grid grid-cols-12 gap-4 p-6 border-b border-slate-100 dark:border-slate-800/50 items-center">
-                <div className="col-span-6 flex gap-4">
-                  <div className="h-20 w-20 rounded-lg bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700">
-                    <img 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlOtbuxazz6j7gVdcqNV5MX8afhj0IK61ghyPsW0tfIOc59IKy6hrrPruX1gKyiujIiaaPiLwnWDQFWd16sop2xx1gtVJBDy2tekyefcEUVlGmFG78Uy7ZyGng2ILoUE5S2Y5lwf2cSVouUWRcjc11-5Nmp1T9tLEKiFK3OUl5icD9bGm8pvTOBKhfP-fefKzIdGFa_bhcDVygXUwVz_LsmtXXdYFMYusKNP_9hnUlrgR0wv2pL-5ORwSpv5Zq5fI9IfRaKOnkP0c" 
-                      alt="Gummy Bears" 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1">Gummy Bears (5kg Bulk)</h3>
-                    <p className="text-xs text-slate-500 mb-3">SKU: GB-5KG-01</p>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-[10px] font-black uppercase tracking-wide">
-                      <span className="material-symbols-outlined text-sm">check_circle</span>
-                      MOQ MET (2 UNITS)
+            {cartItems.length === 0 ? (
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-12 text-center">
+                    <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span className="material-symbols-outlined text-4xl text-slate-400">shopping_basket</span>
                     </div>
-                  </div>
-                </div>
-                <div className="col-span-2 text-center">
-                  <div className="font-bold text-primary text-lg">$45.00</div>
-                  <div className="text-xs text-slate-400 line-through">Retail: $60.00</div>
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800">
-                    <button className="px-3 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700">
-                      <span className="material-symbols-outlined text-sm">remove</span>
+                    <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Your cart is empty</h2>
+                    <p className="text-slate-500 mb-8">Start adding items from our wholesale catalog.</p>
+                    <button 
+                        onClick={onNavigateToCatalog}
+                        className="bg-primary text-white font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-primary/90 transition-all"
+                    >
+                        Browse Catalog
                     </button>
-                    <span className="px-2 font-semibold text-sm">3</span>
-                    <button className="px-3 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700">
-                      <span className="material-symbols-outlined text-sm">add</span>
-                    </button>
-                  </div>
                 </div>
-                <div className="col-span-2 text-right">
-                  <div className="font-bold text-slate-900 dark:text-white text-lg">$135.00</div>
+            ) : (
+                <>
+                {/* Cart Table */}
+                <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-400 uppercase tracking-wider hidden sm:grid">
+                    <div className="col-span-6">Product</div>
+                    <div className="col-span-2 text-center">Pricing</div>
+                    <div className="col-span-2 text-center">Quantity</div>
+                    <div className="col-span-2 text-right">Total</div>
                 </div>
-              </div>
 
-              {/* Item 2 */}
-              <div className="grid grid-cols-12 gap-4 p-6 border-b border-slate-100 dark:border-slate-800/50 items-center">
-                <div className="col-span-6 flex gap-4">
-                  <div className="h-20 w-20 rounded-lg bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700">
-                    <img 
-                      src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2Y9VCMAYqrfdwL319_PJ01D597nh642tdmUHxuoprAtHQafCJwDdxIM3v0aiIEAymLIVAmhXz4CWmYs_kJZKxHIaDGqBAj8cmLHHqcsHWA_hlTZ9tT1xbAsTj-6wFpUc45i4c4bOWQSwug9gbkYa6g8Ia-zsUKYKozs0XrZrbXlPOUAfGznmGYvY1roGRhJAeDzInK5b7UV71QPal6EW4PtUkj5d1JSHNd_3OPoXEz65jyLkO-OrxEetAWER8igY3Zsdg02SxRqY" 
-                      alt="Artisanal Soda Pack" 
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1">Artisanal Soda Pack</h3>
-                    <p className="text-xs text-slate-500 mb-3">SKU: SD-VTY-24</p>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 text-[10px] font-black uppercase tracking-wide">
-                      <span className="material-symbols-outlined text-sm">warning</span>
-                      NEED 3 MORE FOR MOQ
+                {cartItems.map((item) => (
+                <div key={item.product.id} className="grid grid-cols-1 sm:grid-cols-12 gap-4 p-6 border-b border-slate-100 dark:border-slate-800/50 items-center">
+                    <div className="col-span-1 sm:col-span-6 flex gap-4">
+                    <div className="h-20 w-20 rounded-lg bg-slate-100 dark:bg-slate-800 flex-shrink-0 overflow-hidden border border-slate-200 dark:border-slate-700">
+                        <img 
+                        src={item.product.image} 
+                        alt={item.product.title} 
+                        className="h-full w-full object-cover"
+                        />
                     </div>
-                  </div>
+                    <div>
+                        <h3 className="font-bold text-slate-900 dark:text-white text-lg mb-1">{item.product.title}</h3>
+                        <p className="text-xs text-slate-500 mb-3">{item.product.brand}</p>
+                        {/* Mobile Remove */}
+                        <button 
+                            onClick={() => setItemToRemove(item.product.id)}
+                            className="text-xs text-red-500 hover:text-red-600 font-bold flex items-center gap-1 sm:hidden"
+                        >
+                            Remove
+                        </button>
+                        {/* Desktop Remove (Added for completeness/visibility) */}
+                         <button 
+                            onClick={() => setItemToRemove(item.product.id)}
+                            className="hidden sm:flex text-xs text-slate-400 hover:text-red-500 font-bold items-center gap-1 mt-1 transition-colors"
+                        >
+                            <span className="material-symbols-outlined text-sm">delete</span>
+                            Remove Item
+                        </button>
+                    </div>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 text-left sm:text-center">
+                    <div className="font-bold text-primary text-lg">${item.product.price.toFixed(2)}</div>
+                    <div className="text-xs text-slate-400">Per {item.product.type}</div>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 flex justify-start sm:justify-center">
+                    <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800">
+                        <button 
+                            onClick={() => onUpdateQuantity?.(item.product.id, -1)}
+                            className="px-3 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700"
+                        >
+                        <span className="material-symbols-outlined text-sm">remove</span>
+                        </button>
+                        <span className="px-2 font-semibold text-sm">{item.quantity}</span>
+                        <button 
+                            onClick={() => onUpdateQuantity?.(item.product.id, 1)}
+                            className="px-3 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700"
+                        >
+                        <span className="material-symbols-outlined text-sm">add</span>
+                        </button>
+                    </div>
+                    </div>
+                    <div className="col-span-1 sm:col-span-2 text-right">
+                    <div className="font-bold text-slate-900 dark:text-white text-lg">${(item.product.price * item.quantity).toFixed(2)}</div>
+                    </div>
                 </div>
-                <div className="col-span-2 text-center">
-                  <div className="font-bold text-primary text-lg">$32.50</div>
-                  <div className="text-xs text-slate-400 line-through">Retail: $48.00</div>
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  <div className="flex items-center border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-800">
-                    <button className="px-3 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700">
-                      <span className="material-symbols-outlined text-sm">remove</span>
-                    </button>
-                    <span className="px-2 font-semibold text-sm">5</span>
-                    <button className="px-3 py-1 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-700">
-                      <span className="material-symbols-outlined text-sm">add</span>
-                    </button>
-                  </div>
-                </div>
-                <div className="col-span-2 text-right">
-                  <div className="font-bold text-slate-900 dark:text-white text-lg">$162.50</div>
-                </div>
-              </div>
+                ))}
 
-              {/* Actions Footer */}
-              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
-                <button className="text-slate-500 hover:text-red-500 font-medium text-sm flex items-center gap-2 transition-colors">
-                  <span className="material-symbols-outlined text-lg">delete</span>
-                  Clear All Items
-                </button>
-                <button 
-                  onClick={onNavigateToCatalog}
-                  className="text-primary hover:text-primary/80 font-bold text-sm flex items-center gap-2 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-lg">add</span>
-                  Add more items
-                </button>
-              </div>
-            </div>
+                {/* Actions Footer */}
+                <div className="p-4 bg-slate-50 dark:bg-slate-800/50 flex justify-between items-center">
+                    <button 
+                        onClick={() => setIsClearCartOpen(true)}
+                        className="text-slate-500 hover:text-red-500 font-medium text-sm flex items-center gap-2 transition-colors"
+                    >
+                    <span className="material-symbols-outlined text-lg">delete</span>
+                    Clear All Items
+                    </button>
+                    <button 
+                    onClick={onNavigateToCatalog}
+                    className="text-primary hover:text-primary/80 font-bold text-sm flex items-center gap-2 transition-colors"
+                    >
+                    <span className="material-symbols-outlined text-lg">add</span>
+                    Add more items
+                    </button>
+                </div>
+                </div>
 
-            {/* Info Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex gap-4 items-start">
-                <div className="bg-primary/20 p-2 rounded-lg text-primary">
-                  <span className="material-symbols-outlined">local_shipping</span>
+                {/* Info Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex gap-4 items-start">
+                    <div className="bg-primary/20 p-2 rounded-lg text-primary">
+                    <span className="material-symbols-outlined">local_shipping</span>
+                    </div>
+                    <div>
+                    <h4 className="font-bold text-slate-900 dark:text-white mb-1">Tier 1 Shipping</h4>
+                    <p className="text-sm text-slate-500">
+                        Orders over $1000 qualify for free palletized shipping within 2 days.
+                    </p>
+                    </div>
                 </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">Tier 1 Shipping</h4>
-                  <p className="text-sm text-slate-500">
-                    Orders over $500 qualify for free palletized shipping within 2 days.
-                  </p>
                 </div>
-              </div>
-              <div className="bg-primary/5 border border-primary/10 rounded-xl p-6 flex gap-4 items-start">
-                <div className="bg-primary/20 p-2 rounded-lg text-primary">
-                  <span className="material-symbols-outlined">inventory_2</span>
-                </div>
-                <div>
-                  <h4 className="font-bold text-slate-900 dark:text-white mb-1">In Stock Guarantee</h4>
-                  <p className="text-sm text-slate-500">
-                    All items are ready for dispatch from our central warehouse.
-                  </p>
-                </div>
-              </div>
-            </div>
+                </>
+            )}
           </div>
 
           {/* Right Column - Summary & Help */}
+          {cartItems.length > 0 && (
           <div className="space-y-6">
-            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm">
+            <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-6 shadow-sm sticky top-24">
               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-6">Order Summary</h3>
               
               <div className="space-y-3 mb-6 pb-6 border-b border-slate-100 dark:border-slate-800">
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 dark:text-slate-400">Subtotal (8 Units)</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">$297.50</span>
+                  <span className="text-slate-600 dark:text-slate-400">Subtotal ({cartCount} Units)</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600 dark:text-slate-400">Bulk Discount</span>
-                  <span className="font-semibold text-green-600">-$42.00</span>
+                  <span className="font-semibold text-green-600">-${discount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-slate-600 dark:text-slate-400">Est. Shipping</span>
-                  <span className="font-semibold text-slate-900 dark:text-white">$15.00</span>
+                  <span className="text-slate-600 dark:text-slate-400">Shipping</span>
+                  <span className="font-semibold text-slate-900 dark:text-white">{shipping === 0 ? "Free" : `$${shipping.toFixed(2)}`}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-slate-600 dark:text-slate-400">Tax (Vat 0%)</span>
@@ -264,7 +259,7 @@ const Cart: React.FC<CartProps> = ({ onNavigateHome, onNavigateToCatalog, onNavi
               <div className="mb-6">
                 <div className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Grand Total</div>
                 <div className="flex items-baseline justify-between">
-                  <span className="text-4xl font-black text-slate-900 dark:text-white">$270.50</span>
+                  <span className="text-4xl font-black text-slate-900 dark:text-white">${total.toFixed(2)}</span>
                   <span className="text-xs text-slate-400">Currency: USD</span>
                 </div>
               </div>
@@ -282,30 +277,73 @@ const Cart: React.FC<CartProps> = ({ onNavigateHome, onNavigateToCatalog, onNavi
                   Download Quote (PDF)
                 </button>
               </div>
-
-              <div className="flex justify-center gap-4 mt-6 opacity-40">
-                <span className="material-symbols-outlined text-2xl">credit_card</span>
-                <span className="material-symbols-outlined text-2xl">account_balance</span>
-                <span className="material-symbols-outlined text-2xl">account_balance_wallet</span>
-              </div>
             </div>
+          </div>
+          )}
+        </div>
+      </main>
 
-            <div className="bg-primary/5 dark:bg-primary/10 rounded-xl p-6 border border-primary/10">
-              <div className="flex gap-3 mb-2">
-                <span className="material-symbols-outlined text-primary text-2xl">support_agent</span>
-                <h4 className="font-bold text-slate-900 dark:text-white">Need help with Bulk?</h4>
-              </div>
-              <p className="text-sm text-slate-500 mb-4 leading-relaxed">
-                Chat with our wholesale specialists for custom orders over 1,000kg.
-              </p>
-              <a href="#" className="text-primary font-bold text-sm flex items-center gap-1 hover:gap-2 transition-all">
-                Speak with an agent
-                <span className="material-symbols-outlined text-base">arrow_forward</span>
-              </a>
+      {/* Confirmation Dialogs */}
+      {/* Remove Item Dialog */}
+      {itemToRemove !== null && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setItemToRemove(null)}></div>
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all">
+            <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-2xl">delete</span>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Remove Item?</h3>
+            <p className="text-slate-500 mb-6">
+              Are you sure you want to remove this item from your cart?
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setItemToRemove(null)}
+                className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleRemoveItem}
+                className="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Remove
+              </button>
             </div>
           </div>
         </div>
-      </main>
+      )}
+
+      {/* Clear Cart Dialog */}
+      {isClearCartOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsClearCartOpen(false)}></div>
+          <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-sm p-6 transform transition-all">
+             <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 flex items-center justify-center mb-4">
+              <span className="material-symbols-outlined text-2xl">remove_shopping_cart</span>
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Clear Cart?</h3>
+            <p className="text-slate-500 mb-6">
+              This will remove all items from your cart. This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button 
+                onClick={() => setIsClearCartOpen(false)}
+                className="flex-1 px-4 py-3 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleClearCart}
+                className="flex-1 px-4 py-3 bg-red-600 text-white font-bold rounded-xl hover:bg-red-700 transition-colors"
+              >
+                Clear All
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };

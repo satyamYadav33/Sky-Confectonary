@@ -1,63 +1,81 @@
-import React, { useState } from 'react';
 
-interface Product {
-  id: number;
-  title: string;
-  description: string;
-  price: string;
-  moq: string;
-  image: string;
-}
+import React, { useState } from 'react';
+import { Product } from '../types';
 
 interface FeaturedProductsProps {
   onNavigateToCatalog?: () => void;
-  onAddToCart?: (quantity: number) => void;
+  onAddToCart?: (product: Product, quantity: number) => void;
 }
 
+// Mock products that match global Product type to satisfy TypeScript
 const products: Product[] = [
   {
     id: 1,
     title: 'Premium Gummy Bears (5kg)',
     description: 'Classic fruit flavored gummy bears in bulk catering bags.',
-    price: '45.00',
-    moq: 'MOQ: 10 Boxes',
+    price: 45.00,
+    moq: '10 Boxes',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDlOtbuxazz6j7gVdcqNV5MX8afhj0IK61ghyPsW0tfIOc59IKy6hrrPruX1gKyiujIiaaPiLwnWDQFWd16sop2xx1gtVJBDy2tekyefcEUVlGmFG78Uy7ZyGng2ILoUE5S2Y5lwf2cSVouUWRcjc11-5Nmp1T9tLEKiFK3OUl5icD9bGm8pvTOBKhfP-fefKzIdGFa_bhcDVygXUwVz_LsmtXXdYFMYusKNP_9hnUlrgR0wv2pL-5ORwSpv5Zq5fI9IfRaKOnkP0c',
+    brand: 'Global Treats',
+    unitPriceText: '$9.00/kg',
+    shipping: 'Standard',
+    type: 'Box',
+    shippingIcon: 'local_shipping',
+    badges: []
   },
   {
     id: 2,
     title: 'Artisan Soda Variety Pack',
     description: 'Mixed crate of natural fruit-infused sparkling beverages.',
-    price: '28.50',
-    moq: 'MOQ: 24 Cases',
+    price: 28.50,
+    moq: '24 Cases',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB2Y9VCMAYqrfdwL319_PJ01D597nh642tdmUHxuoprAtHQafCJwDdxIM3v0aiIEAymLIVAmhXz4CWmYs_kJZKxHIaDGqBAj8cmLHHqcsHWA_hlTZ9tT1xbAsTj-6wFpUc45i4c4bOWQSwug9gbkYa6g8Ia-zsUKYKozs0XrZrbXlPOUAfGznmGYvY1roGRhJAeDzInK5b7UV71QPal6EW4PtUkj5d1JSHNd_3OPoXEz65jyLkO-OrxEetAWER8igY3Zsdg02SxRqY',
+    brand: 'Vintage Sweets',
+    unitPriceText: '$1.18/bottle',
+    shipping: 'Fragile',
+    type: 'Case',
+    shippingIcon: 'wine_bar',
+    badges: []
   },
   {
     id: 3,
     title: 'Dark Sea Salt Chocolate Bars',
     description: 'Premium 70% cacao dark chocolate bars, 100g each.',
-    price: '3.20',
-    moq: 'MOQ: 50 Units',
+    price: 3.20,
+    moq: '50 Units',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEYU1Z3F4wTXA-SIf3ITi5DsrUif13h3hJIJw-39DlhOOJ4pDowQLWcA9Igj8RtYC5JQaxGltiA4n3kQz3qsYw4u4mzbfh1jblW2w0Feg9gLX21w-CQUh4TXZ8Vbk83cURPuHfQl4Xr_KnC8jgo_xBpvn7CXZ2Oya6qaJV02vrlYlJWlf90v68W1hfgjg1DVgRL5RFmg5jRmsV-v8B-eD23Doy5E_2eE1wPYID_RxXErO9ckUdAJLfSJwt_NbnaoUAVs92hc0b-G4',
+    brand: 'Artisanal Crunch',
+    unitPriceText: '$3.20/unit',
+    shipping: 'Temperature Ctl',
+    type: 'Unit',
+    shippingIcon: 'thermostat',
+    badges: []
   },
   {
     id: 4,
     title: 'Organic Trail Mix (2kg)',
     description: 'Nutritious mix of nuts, seeds, and dried organic fruits.',
-    price: '19.95',
-    moq: 'MOQ: 15 Bags',
+    price: 19.95,
+    moq: '15 Bags',
     image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDDJ4P1k1CqcALlj2aozwBmFsg_k9G-FviRj3mJgCeBjSCFv0411KyTVzi_3vGuTV4hDjUQe29N11f0d_Nkyub18oojaZxxgkQ3_RkMWqZEpZXqAKI6E_ot5fdb1OjyGP25-LKVmzICOzNVY21HhrQt-sX_iz-j1rTRVaEyoiyIk6dZVGDzpRGYElwiRWbKNGCwtSkiOsVGXNPiJgXzZo0K0AOk9ABRkw6cL69L9FJavgqOEFKO8-iNpuVbXA0moe7vmCSOngS3yiw',
+    brand: 'Nature First',
+    unitPriceText: '$9.97/kg',
+    shipping: 'Standard',
+    type: 'Bag',
+    shippingIcon: 'eco',
+    badges: []
   },
 ];
 
 const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ onNavigateToCatalog, onAddToCart }) => {
   const [addedItems, setAddedItems] = useState<number[]>([]);
 
-  const handleAddToCart = (id: number) => {
+  const handleAddToCart = (product: Product) => {
     if (onAddToCart) {
-      onAddToCart(1);
-      setAddedItems(prev => [...prev, id]);
+      onAddToCart(product, 1);
+      setAddedItems(prev => [...prev, product.id]);
       setTimeout(() => {
-        setAddedItems(prev => prev.filter(itemId => itemId !== id));
+        setAddedItems(prev => prev.filter(itemId => itemId !== product.id));
       }, 2000);
     }
   };
@@ -107,11 +125,11 @@ const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ onNavigateToCatalog
               <div className="mt-auto px-2 pb-2">
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xl font-black text-slate-900 dark:text-white">
-                    ${product.price} <span className="text-xs font-normal text-slate-400">/ unit</span>
+                    ${product.price.toFixed(2)} <span className="text-xs font-normal text-slate-400">/ unit</span>
                   </span>
                 </div>
                 <button 
-                  onClick={() => handleAddToCart(product.id)}
+                  onClick={() => handleAddToCart(product)}
                   className={`w-full flex items-center justify-center gap-2 rounded-lg py-3 text-sm font-bold text-white transition-all active:scale-95 ${
                     addedItems.includes(product.id) 
                       ? "bg-green-600 hover:bg-green-700" 
