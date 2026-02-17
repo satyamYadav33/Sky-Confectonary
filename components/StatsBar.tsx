@@ -1,3 +1,4 @@
+
 import React from 'react';
 
 const stats = [
@@ -22,6 +23,7 @@ const StatsBar: React.FC = () => {
   return (
     <section className="bg-slate-50 dark:bg-slate-900/50 py-12 border-y border-slate-200 dark:border-slate-800">
       <div className="mx-auto max-w-7xl px-6">
+        <h2 className="sr-only">Key Statistics</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {stats.map((stat, index) => (
             <div key={index} className="flex items-center gap-5 p-4">

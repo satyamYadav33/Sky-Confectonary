@@ -55,11 +55,19 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
 
     if (activeCategory !== "All") {
        // Mock category filtering logic. 
+       if (activeCategory === "Snacks") result = result.filter(p => p.type === "Box" || p.type === "Bag");
+       if (activeCategory === "Beverages") result = result.filter(p => p.type === "Case" && p.shippingIcon === "wine_bar");
+       if (activeCategory === "Candy") result = result.filter(p => p.title.toLowerCase().includes("candy") || p.description?.toLowerCase().includes("candy"));
     }
 
+    // Improved Search: Token-based matching
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        result = result.filter(p => p.title.toLowerCase().includes(q) || p.brand.toLowerCase().includes(q));
+        const tokens = q.split(/\s+/).filter(t => t.length > 0);
+        result = result.filter(p => {
+            const searchString = `${p.title} ${p.brand} ${p.description || ''} ${p.id}`.toLowerCase();
+            return tokens.every(token => searchString.includes(token));
+        });
     }
 
     if (selectedBrands.length > 0) {
@@ -79,6 +87,10 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
         result = [...result].sort((a, b) => b.price - a.price);
     } else if (sortBy === "Newest Arrivals") {
         result = [...result].sort((a, b) => b.id - a.id);
+    } else if (sortBy === "Alphabetical: A-Z") {
+        result = [...result].sort((a, b) => a.title.localeCompare(b.title));
+    } else if (sortBy === "Alphabetical: Z-A") {
+        result = [...result].sort((a, b) => b.title.localeCompare(a.title));
     }
 
     return result;
@@ -127,14 +139,15 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
 
   const handleQuickOrder = (e: React.FormEvent) => {
     e.preventDefault();
+    // Allow searching by ID or exact title match
     const found = products.find(p => p.id.toString() === quickOrderInput || p.title.toLowerCase() === quickOrderInput.toLowerCase());
     
     if (found) {
         handleAddToCart(found);
         setQuickOrderInput("");
-        alert(`Added ${found.title} to cart!`);
+        alert(`Successfully added ${found.title} to your cart.`);
     } else {
-        alert("Product not found. Try entering a valid Product ID.");
+        alert("Product not found. Please check the Product ID and try again.");
     }
   };
 
@@ -158,7 +171,7 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
   return (
     <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-background-dark">
       {/* App Specific Header */}
-      <header className="sticky top-0 z-50 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800">
+      <header className="sticky top-0 z-50 w-full bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm">
         <div className="mx-auto flex h-auto lg:h-20 max-w-[1600px] flex-col lg:flex-row items-center justify-between px-6 py-4 lg:py-0 gap-4 lg:gap-8">
           <div className="flex w-full lg:w-auto items-center justify-between gap-12">
             <div 
@@ -175,7 +188,7 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
             {/* Mobile Filter Toggle */}
             <button 
                 onClick={() => setShowMobileSidebar(true)}
-                className="lg:hidden p-2 text-slate-600 dark:text-slate-300"
+                className="lg:hidden p-2 text-slate-600 dark:text-slate-300 hover:text-primary transition-colors"
             >
                 <span className="material-symbols-outlined">filter_list</span>
             </button>
@@ -188,7 +201,7 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
               </span>
               <input 
                 type="text"
-                placeholder="Search bulk inventory..."
+                placeholder="Search by name, brand, or ID..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full bg-slate-100 dark:bg-slate-800 border-transparent focus:bg-white dark:focus:bg-slate-900 border-2 focus:border-primary rounded-xl py-3 pl-12 pr-4 outline-none transition-all text-sm font-medium"
@@ -197,17 +210,20 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
           </div>
 
           <div className="flex w-full lg:w-auto items-center justify-between lg:justify-end gap-6">
-            <form onSubmit={handleQuickOrder} className="hidden md:flex items-center gap-2">
+            <form onSubmit={handleQuickOrder} className="hidden md:flex items-center gap-2 relative group">
                  <input 
                     type="text" 
-                    placeholder="Quick Order ID #"
+                    placeholder="Quick ID #"
                     value={quickOrderInput}
                     onChange={(e) => setQuickOrderInput(e.target.value)}
-                    className="w-32 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-primary"
+                    className="w-32 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-bold outline-none focus:border-primary focus:w-40 transition-all"
                  />
-                 <button type="submit" className="bg-primary text-white p-2 rounded-lg hover:bg-primary/90">
+                 <button type="submit" className="bg-primary text-white p-2 rounded-lg hover:bg-primary/90 shadow-sm active:scale-95 transition-all">
                     <span className="material-symbols-outlined text-sm block">add</span>
                  </button>
+                 <div className="absolute top-full right-0 mt-2 w-48 bg-white dark:bg-slate-800 text-xs p-2 rounded shadow-lg border border-slate-200 dark:border-slate-700 opacity-0 group-focus-within:opacity-100 pointer-events-none transition-opacity z-20">
+                    Enter a Product ID to quickly add it to your cart.
+                 </div>
             </form>
 
             <div className="flex items-center gap-4">
@@ -237,17 +253,36 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
 
       <div className="mx-auto max-w-[1600px] w-full px-6 py-8 flex items-start gap-8 relative">
         
-        {/* Sidebar Overlay for Mobile */}
+        {/* Sidebar Overlay for Mobile with Animation */}
         {showMobileSidebar && (
             <div className="fixed inset-0 z-[100] lg:hidden">
-                <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowMobileSidebar(false)}></div>
-                <div className="absolute inset-y-0 left-0 w-80 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-y-auto">
+                <div 
+                    className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-300" 
+                    onClick={() => setShowMobileSidebar(false)}
+                ></div>
+                <div 
+                    className="absolute inset-y-0 left-0 w-80 bg-white dark:bg-slate-900 shadow-2xl p-6 overflow-y-auto animate-in slide-in-from-left duration-300 scroll-smooth"
+                >
                     <div className="flex justify-between items-center mb-6">
-                        <h2 className="text-xl font-black">Filters</h2>
-                        <button onClick={() => setShowMobileSidebar(false)}>
+                        <h2 className="text-xl font-black text-slate-900 dark:text-white">Filters</h2>
+                        <button onClick={() => setShowMobileSidebar(false)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
                             <span className="material-symbols-outlined">close</span>
                         </button>
                     </div>
+                    {/* Mobile Quick Order */}
+                    <form onSubmit={handleQuickOrder} className="flex items-center gap-2 mb-6">
+                         <input 
+                            type="text" 
+                            placeholder="Quick Order ID #"
+                            value={quickOrderInput}
+                            onChange={(e) => setQuickOrderInput(e.target.value)}
+                            className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-sm font-bold outline-none focus:border-primary"
+                         />
+                         <button type="submit" className="bg-primary text-white p-2 rounded-lg hover:bg-primary/90">
+                            <span className="material-symbols-outlined text-sm block">add</span>
+                         </button>
+                    </form>
+                    <hr className="border-slate-100 dark:border-slate-800 mb-6" />
                     <SidebarContent 
                         activeCategory={activeCategory} 
                         setActiveCategory={setActiveCategory}
@@ -321,7 +356,7 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
                   </button>
                 </div>
                 
-                <div className="relative">
+                <div className="relative min-w-[200px]">
                   <select 
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -331,6 +366,8 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
                     <option>Price: Low to High</option>
                     <option>Price: High to Low</option>
                     <option>Newest Arrivals</option>
+                    <option>Alphabetical: A-Z</option>
+                    <option>Alphabetical: Z-A</option>
                   </select>
                   <span className="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none">
                     expand_more
@@ -342,11 +379,11 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
 
           {/* Product Grid / List */}
           {filteredProducts.length === 0 ? (
-             <div className="text-center py-20 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700">
+             <div className="text-center py-20 bg-slate-100 dark:bg-slate-800/50 rounded-2xl border-2 border-dashed border-slate-200 dark:border-slate-700 animate-in fade-in zoom-in duration-300">
                 <span className="material-symbols-outlined text-4xl text-slate-400 mb-2">search_off</span>
                 <p className="text-lg font-bold text-slate-500">No products found matching your filters.</p>
                 <button 
-                    onClick={() => { setSearchQuery(""); setSelectedBrands([]); setSelectedTypes([]); setPriceRange([0, Math.max(500, maxProductPrice)]); }}
+                    onClick={() => { setSearchQuery(""); setSelectedBrands([]); setSelectedTypes([]); setPriceRange([0, Math.max(500, maxProductPrice)]); setActiveCategory("All"); }}
                     className="mt-4 text-primary font-bold hover:underline"
                 >
                     Clear all filters
@@ -399,7 +436,10 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
 
                 {/* Content */}
                 <div className={!isGridView ? 'flex-1 py-2 w-full' : ''}>
-                  <div className="text-xs font-semibold text-slate-500 mb-1">{product.brand}</div>
+                  <div className="flex justify-between items-start">
+                    <div className="text-xs font-semibold text-slate-500 mb-1">{product.brand}</div>
+                    <div className="text-[10px] text-slate-400">ID: {product.id}</div>
+                  </div>
                   <h3 className="font-bold text-slate-900 dark:text-white text-lg leading-tight mb-3">
                     {product.title}
                   </h3>
@@ -504,10 +544,10 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
       {quickViewProduct && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
            {/* Backdrop */}
-           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setQuickViewProduct(null)}></div>
+           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300" onClick={() => setQuickViewProduct(null)}></div>
            
            {/* Modal Content */}
-           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-4xl relative z-10 overflow-hidden flex flex-col md:flex-row max-h-[90vh] animate-in zoom-in duration-300">
               <button 
                 onClick={() => setQuickViewProduct(null)}
                 className="absolute top-4 right-4 z-20 p-2 bg-white/80 dark:bg-slate-900/80 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -530,9 +570,6 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
                         backgroundRepeat: 'no-repeat'
                     }}
                   >
-                     {/* We use background image for smoother pan, or img tag if preferred. 
-                         Implementation used here: div with background for easy pan control 
-                      */}
                       {!isZoomed && <img 
                         src={quickViewProduct.image} 
                         alt={quickViewProduct.title} 
@@ -546,7 +583,10 @@ const Catalog: React.FC<CatalogProps> = ({ onNavigateHome, onNavigateToCart, car
 
               <div className="w-full md:w-1/2 p-8 overflow-y-auto">
                  <div className="mb-6">
-                    <div className="text-sm font-bold text-primary mb-2">{quickViewProduct.brand}</div>
+                    <div className="flex justify-between items-start">
+                        <div className="text-sm font-bold text-primary mb-2">{quickViewProduct.brand}</div>
+                        <div className="text-xs text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">ID: {quickViewProduct.id}</div>
+                    </div>
                     <h2 className="text-3xl font-black text-slate-900 dark:text-white mb-4 leading-tight">{quickViewProduct.title}</h2>
                     <div className="flex gap-2 mb-4">
                         {quickViewProduct.badges.map((badge, i) => (
@@ -679,7 +719,7 @@ const SidebarContent = ({
 
         <div className="mb-8">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4">Filter by Brand</h3>
-            <div className="flex flex-col gap-3 max-h-48 overflow-y-auto">
+            <div className="flex flex-col gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                 {allBrands.map((brand: string) => (
                 <label key={brand} className="flex items-center gap-3 cursor-pointer group">
                     <div 

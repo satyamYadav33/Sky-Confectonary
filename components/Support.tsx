@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface SupportProps {
@@ -7,6 +8,17 @@ interface SupportProps {
 
 const Support: React.FC<SupportProps> = ({ onNavigateHome, onNavigateToCatalog }) => {
   const [activeFaq, setActiveFaq] = useState<number | null>(0);
+  const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormStatus('submitting');
+    
+    // Simulate API call
+    setTimeout(() => {
+      setFormStatus('success');
+    }, 1500);
+  };
 
   const faqs = [
     {
@@ -104,43 +116,73 @@ const Support: React.FC<SupportProps> = ({ onNavigateHome, onNavigateToCatalog }
                <span className="material-symbols-outlined text-primary">mail</span>
                Send us a Message
              </h2>
-             <form className="space-y-4">
-               <div className="grid grid-cols-2 gap-4">
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-slate-500 uppercase">First Name</label>
-                   <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Jane" />
-                 </div>
-                 <div className="space-y-1">
-                   <label className="text-xs font-bold text-slate-500 uppercase">Last Name</label>
-                   <input type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Doe" />
-                 </div>
-               </div>
-               
-               <div className="space-y-1">
-                 <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
-                 <input type="email" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="jane@company.com" />
-               </div>
-
-               <div className="space-y-1">
-                 <label className="text-xs font-bold text-slate-500 uppercase">Subject</label>
-                 <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
-                   <option>Order Inquiry</option>
-                   <option>Product Question</option>
-                   <option>Return / Refund</option>
-                   <option>Other</option>
-                 </select>
-               </div>
-
-               <div className="space-y-1">
-                 <label className="text-xs font-bold text-slate-500 uppercase">Message</label>
-                 <textarea className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[120px]" placeholder="How can we help you today?"></textarea>
-               </div>
-
-               <button className="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-2">
-                 <span className="material-symbols-outlined">send</span>
-                 Send Message
-               </button>
-             </form>
+             
+             {formStatus === 'success' ? (
+                <div className="text-center py-12 animate-in fade-in zoom-in duration-300">
+                    <div className="w-20 h-20 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <span className="material-symbols-outlined text-4xl">check_circle</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Message Sent!</h3>
+                    <p className="text-slate-500 mb-8 max-w-xs mx-auto">
+                        Thank you for contacting us. Our support team will get back to you within 24 hours.
+                    </p>
+                    <button 
+                        onClick={() => setFormStatus('idle')}
+                        className="text-primary font-bold hover:underline flex items-center justify-center gap-1 mx-auto"
+                    >
+                        <span className="material-symbols-outlined text-lg">replay</span>
+                        Send another message
+                    </button>
+                </div>
+             ) : (
+                 <form className="space-y-4" onSubmit={handleSubmit}>
+                   <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1">
+                       <label className="text-xs font-bold text-slate-500 uppercase">First Name</label>
+                       <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Jane" />
+                     </div>
+                     <div className="space-y-1">
+                       <label className="text-xs font-bold text-slate-500 uppercase">Last Name</label>
+                       <input required type="text" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="Doe" />
+                     </div>
+                   </div>
+                   
+                   <div className="space-y-1">
+                     <label className="text-xs font-bold text-slate-500 uppercase">Email Address</label>
+                     <input required type="email" className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all" placeholder="jane@company.com" />
+                   </div>
+    
+                   <div className="space-y-1">
+                     <label className="text-xs font-bold text-slate-500 uppercase">Subject</label>
+                     <select className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all cursor-pointer">
+                       <option>Order Inquiry</option>
+                       <option>Product Question</option>
+                       <option>Return / Refund</option>
+                       <option>Other</option>
+                     </select>
+                   </div>
+    
+                   <div className="space-y-1">
+                     <label className="text-xs font-bold text-slate-500 uppercase">Message</label>
+                     <textarea required className="w-full bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all min-h-[120px]" placeholder="How can we help you today?"></textarea>
+                   </div>
+    
+                   <button 
+                     type="submit"
+                     disabled={formStatus === 'submitting'}
+                     className="w-full bg-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:bg-primary/90 transition-all flex items-center justify-center gap-2 mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                   >
+                     {formStatus === 'submitting' ? (
+                        <span className="material-symbols-outlined animate-spin">progress_activity</span>
+                     ) : (
+                        <>
+                            <span className="material-symbols-outlined">send</span>
+                            Send Message
+                        </>
+                     )}
+                   </button>
+                 </form>
+             )}
           </div>
         </div>
       </main>
